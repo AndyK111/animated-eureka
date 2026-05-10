@@ -10,6 +10,7 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Random;
 
 @SpringBootApplication
 @Controller
@@ -26,17 +27,33 @@ public class GettingStartedApplication {
         return "index";
     }
 
+    public static String getRandomString(int length)
+    {
+        String chars = "abcdefghijklmnopqrstuvwxyz";
+        Random random = new Random();
+        StringBuilder sb = new StringBuilder(length);
+
+        for (int i = 0; i < length; i++) {
+            int index = random.nextInt(chars.length());
+            sb.append(chars.charAt(index));
+        }
+
+        return sb.toString();
+    }
+
     @GetMapping("/database")
     String database(Map<String, Object> model) {
+        System.out.println("Print statement inside the GettingStartedApplication.database() method. Andy Kempf");
+
         try (Connection connection = dataSource.getConnection()) {
             final var statement = connection.createStatement();
-            statement.executeUpdate("CREATE TABLE IF NOT EXISTS ticks (tick timestamp)");
-            statement.executeUpdate("INSERT INTO ticks VALUES (now())");
+            statement.executeUpdate("CREATE TABLE IF NOT EXISTS table_timestamp_and_random_string (tick timestamp, random_string varchar(50))");
+            statement.executeUpdate("INSERT INTO table_timestamp_and_random_string VALUES (now(), '\" + getRandomString(16) + \"')\"");
 
-            final var resultSet = statement.executeQuery("SELECT tick FROM ticks");
+            final var resultSet = statement.executeQuery("SELECT tick FROM table_timestamp_and_random_string");
             final var output = new ArrayList<>();
             while (resultSet.next()) {
-                output.add("Read from DB: " + resultSet.getTimestamp("tick"));
+                output.add("Read from DB: " + resultSet.getTimestamp("tick") + " " + resultSet.getString("random_string"));
             }
 
             model.put("records", output);
